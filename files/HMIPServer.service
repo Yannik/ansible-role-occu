@@ -1,0 +1,13 @@
+[Unit]
+Description=OCCU HMIPServer
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/java -Xmx64m -Dlog4j.configuration=file:///etc/config/log4j.xml -Dfile.encoding=ISO-8859-1 -jar /opt/HMServer/HMIPServer.jar /opt/hm/etc/crRFD.conf
+
+# https://github.com/litti/dccu2/blob/master/x86_32_debian_all/etc/init.d/ccu2-ReGaHss#L60
+ExecStop=/bin/sh -c 'echo "load tclrega.so; rega system.Save()" | /opt/hm/bin/tclsh'
+
+[Install]
+WantedBy=multi-user.target
+

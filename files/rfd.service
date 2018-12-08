@@ -1,0 +1,11 @@
+[Unit]
+Description=OCCU rfd
+
+[Service]
+Type=simple
+Environment=LD_LIBRARY_PATH=/opt/hm/lib
+ExecStart=/opt/hm/bin/rfd -d -l 0 -f /opt/hm/etc/config/rfd.conf
+
+[Install]
+WantedBy=multi-user.target
+

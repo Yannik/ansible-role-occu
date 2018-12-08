@@ -1,0 +1,11 @@
+[Unit]
+Description=OCCU ReGaHss
+
+[Service]
+Type=simple
+Environment=LD_LIBRARY_PATH=/opt/hm/lib
+ExecStart=/opt/hm/bin/ReGaHss.community -l 0 -f /opt/hm/etc/rega.conf
+
+[Install]
+WantedBy=multi-user.target
+

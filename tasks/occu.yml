@@ -1,0 +1,231 @@
+- name: Install git
+  package:
+    name: git
+    state: present
+
+- name: Clone occu source
+  git:
+    repo: https://github.com/eq-3/occu.git
+    dest: "{{ occu_src_dir }}"
+    depth: 1
+    version: "{{ occu_git_version|default('HEAD') }}"
+  register: occu_source_clone
+
+# the binaries shipped with occu are 32-bit
+- name: Add i386 Architecture
+  command: dpkg --add-architecture i386
+  args:
+    creates: /var/lib/dpkg/arch
+  register: occu_i386
+
+- name: Update APT cache for i386
+  apt:
+    update_cache: true
+  when: occu_i386 is changed
+
+- name: Install lib32 packages
+  package:
+    name: "{{ item }}"
+  with_items:
+    - libc6-i386
+    - libusb-1.0-0:i386
+    - lib32stdc++6
+
+- name: Install jre
+  package:
+    name: openjdk-8-jre-headless
+    state: present
+
+- name: Install lighttpd
+  package:
+    name: lighttpd
+    state: present
+  register: lighttpd_install
+
+- name: Remove lighttpd config files upon initial installation
+  shell: rm -rf /etc/lighttpd/*
+  when: lighttpd_install is changed
+
+- name: Create /opt/hm directory
+  file:
+   path: /opt/hm
+   state: directory
+
+- name: Copy lib files
+  synchronize:
+    src: "{{ occu_src_dir }}/X86_32_Debian_Wheezy/packages-eQ-3/WebUI/lib/"
+    dest: /opt/hm/lib
+  delegate_to: "{{ inventory_hostname }}"
+  when: occu_source_clone is changed
+
+- name: Copy lighttpd config files
+  synchronize:
+    src: "{{ occu_src_dir }}/X86_32_Debian_Wheezy/packages/lighttpd/etc/lighttpd/"
+    dest: /etc/lighttpd/
+  delegate_to: "{{ inventory_hostname }}"
+  notify: Restart lighttpd
+  when: occu_source_clone is changed
+
+- name: Fix LD_LIBRARY_PATH for lighttpd cgi
+  copy:
+    src: lighttpd-setenv.conf
+    dest: /etc/lighttpd/conf.d/setenv.conf
+  notify: Restart lighttpd
+
+- name: Configure udev rule that enables the tty of the HMIP-RFUSB stick
+  copy:
+    src: 99-hmip-rfusb.rules
+    dest: /etc/udev/rules.d/99-hmip-rfusb.rules
+
+- name: Get version
+  command: git describe --tags
+  args:
+    chdir: "{{ occu_src_dir }}"
+  changed_when: false
+  register: occu_version
+
+# https://homematic-forum.de/forum/viewtopic.php?f=56&t=39240&start=100#p457765
+- name: Create /VERSION (required by ReGaHSS) and /boot/VERSION (required by HMIPSERVER) files
+  copy:
+    content: "VERSION={{ occu_version.stdout }}"
+    dest: "{{ item }}"
+  with_items:
+    - /VERSION
+    - /boot/VERSION
+
+- name: Install WEBUI
+  synchronize:
+    src: "{{ occu_src_dir }}/WebUI/"
+    dest: /opt/hm
+  delegate_to: "{{ inventory_hostname }}"
+  when: occu_source_clone is changed
+
+- name: Install arch-specific stuff
+  synchronize:
+    src: "{{ occu_src_dir }}/X86_32_Debian_Wheezy/{{ item }}"
+    dest: /opt/hm
+    rsync_opts:
+      - "--exclude=config_templates"
+      - "--exclude=lighttpd" # is copied manually
+      - "--exclude=init.d" # we ship our own systemd service files
+      - "--exclude=opt" # excludes RFD/opt/ which needs to be copied manually
+  delegate_to: "{{ inventory_hostname }}"
+  with_items:
+    - "packages-eQ-3/WebUI/"
+    - "packages-eQ-3/RFD/"
+  when: occu_source_clone is changed
+
+- name: Install HMIPServer java stuff
+  synchronize:
+    src: "{{ occu_src_dir }}/HMserver/opt/"
+    dest: /opt
+    rsync_opts:
+      - "--exclude=config_templates"
+      - "--exclude=init.d" # we ship our own systemd service files
+  delegate_to: "{{ inventory_hostname }}"
+  when: occu_source_clone is changed
+
+- name: Install firmware
+  synchronize:
+    src: "{{ occu_src_dir }}/firmware"
+    dest: /opt/hm/
+  delegate_to: "{{ inventory_hostname }}"
+  when: occu_source_clone is changed
+
+- name: Create /etc/config directory
+  file:
+    path: /etc/config
+    state: directory
+
+- name: Create /etc/config/firmware (this is hardcoded in rfd)
+  file:
+    path: /etc/config/firmware
+    state: directory
+
+- name: Set correct WEBUI_VERSION in WebUI/www/rega/pages/index.htm
+  replace:
+    dest: /opt/hm/www/rega/pages/index.htm
+    regexp: '(\s+)WEBUI_VERSION = [^;]*;'
+    replace: '\1WEBUI_VERSION =  "{{ occu_version.stdout }}";'
+
+- name: Install custom InterfacesList.xml file
+  template:
+    src: InterfacesList.xml
+    dest: /opt/hm/etc/config/
+
+- name: Set adapter in crRFD.conf
+  ini_file:
+    path: /opt/hm/etc/crRFD.conf
+    section:
+    option: Adapter.1.Port
+    value: /dev/ttyUSB0
+
+- name: Install /etc/config/log4j.xml required by HMIPServer
+  copy:
+    src: "{{ occu_src_dir }}/HMserver/etc/config_templates/log4j.xml"
+    remote_src: yes
+    dest: /etc/config/
+
+# /etc/config/InterfacesList.xml is hardcoded in www/tools/devconfig.cgi
+# /opt/hm/etc/config/InterfacesList.xml is hardcoded in www/config/ic_common.tcl
+# -.-
+- name: Create link /etc/config/InterfacesList.xml -> /opt/hm/etc/config/InterfacesList.xml
+  file:
+    path: /etc/config/InterfacesList.xml
+    src: /opt/hm/etc/config/InterfacesList.xml
+    state: link
+
+- name: Remove [Interface 0] section from rfd.conf
+  ini_file:
+    section: "Interface 0"
+    state: absent
+    path: /opt/hm/etc/config/rfd.conf
+
+- name: Fix paths in rega.conf
+  replace:
+    regexp: "=/{{ item }}"
+    replace: "=/opt/hm/{{ item }}"
+    encoding: "iso8859-1"
+    path: /opt/hm/etc/rega.conf
+  with_items:
+    - "etc/config"
+    - "www"
+    - "bin"
+
+- name: Enable devconfig button in webinterface
+  lineinfile:
+    path: /etc/config/tweaks
+    line: CP_DEVCONFIG=1
+    create: yes
+
+# the webinterface uploads firmware files into this directory,
+# therefore we also have to tell the HMIPServer to use this path
+- name: configure device firmware directory
+  lineinfile:
+    path: /opt/hm/etc/crRFD.conf
+    regexp: '^FirmwareUpdate.BG.OTAU.Home='
+    line: 'FirmwareUpdate.BG.OTAU.Home=/etc/config/firmware'
+
+- name: Install HMIPServer, ReGaHss, rfd services
+  copy:
+    src: "{{ item }}.service"
+    dest: "/etc/systemd/system/{{ item }}.service"
+  with_items:
+    - HMIPServer
+    - ReGaHss
+    - rfd
+
+- name: Enable HMIPServer, ReGaHss, rfd services
+  service:
+    name: "{{ item }}"
+    state: started
+    enabled: yes
+  with_items:
+    - HMIPServer
+    - ReGaHss
+    - rfd
+
+- name: Print version
+  debug:
+    msg: "{{ occu_version.stdout }}"
+

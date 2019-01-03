@@ -1,1 +1,3 @@
 occu_src_dir: /usr/local/src/occu
+occu_use_bidcos: false
+occu_use_hmip: true

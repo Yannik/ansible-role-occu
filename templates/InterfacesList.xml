@@ -1,15 +1,19 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <interfaces v="1.0">
+{% if occu_use_bidcos %}
         <ipc>
                 <name>BidCos-RF</name>
                 <url>xmlrpc_bin://127.0.0.1:2001</url>
                 <info>BidCos-RF</info>
         </ipc>
+{% endif %}
+{% if occu_use_hmip %}
         <ipc>
                 <name>HmIP-RF</name>
                 <url>xmlrpc://127.0.0.1:2010</url>
                 <info>HmIP-RF</info>
         </ipc>
+{% endif %}
         <ipc>
                 <name>VirtualDevices</name>
                 <url>xmlrpc://127.0.0.1:9292/groups</url>

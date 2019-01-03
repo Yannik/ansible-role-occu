@@ -167,8 +167,7 @@
 
 - name: Install /etc/config/log4j.xml required by HMIPServer
   copy:
-    src: "{{ occu_src_dir }}/HMserver/etc/config_templates/log4j.xml"
-    remote_src: yes
+    src: log4j.xml
     dest: /etc/config/
 
 # /etc/config/InterfacesList.xml is hardcoded in www/tools/devconfig.cgi

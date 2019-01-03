@@ -196,6 +196,11 @@
     - "www"
     - "bin"
 
+- name: Fix diagram creation
+  file:
+     path: /var/status/SDinitialised
+     state: touch
+
 - name: Enable devconfig button in webinterface
   lineinfile:
     path: /etc/config/tweaks

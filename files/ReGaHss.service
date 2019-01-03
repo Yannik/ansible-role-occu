@@ -6,6 +6,9 @@ Type=simple
 Environment=LD_LIBRARY_PATH=/opt/hm/lib
 ExecStart=/opt/hm/bin/ReGaHss.community -l 0 -f /opt/hm/etc/rega.conf
 
+# https://github.com/litti/dccu2/blob/master/x86_32_debian_all/etc/init.d/ccu2-ReGaHss#L60
+ExecStop=/bin/sh -c 'echo "load tclrega.so; rega system.Save()" | /opt/hm/bin/tclsh'
+
 [Install]
 WantedBy=multi-user.target
 

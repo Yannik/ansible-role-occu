@@ -142,6 +142,11 @@
     path: /etc/config/firmware
     state: directory
 
+- name: Install hmserver.conf
+  copy:
+    src: hmserver.conf
+    dest: /opt/hm/etc/hmserver.conf
+
 - name: Set correct WEBUI_VERSION in WebUI/www/rega/pages/index.htm
   replace:
     dest: /opt/hm/www/rega/pages/index.htm

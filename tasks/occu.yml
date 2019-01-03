@@ -9,6 +9,9 @@
     dest: "{{ occu_src_dir }}"
     depth: 1
     version: "{{ occu_git_version|default('HEAD') }}"
+  notify:
+    - Restart HMIPServer
+    - Restart ReGaHss
   register: occu_source_clone
 
 # the binaries shipped with occu are 32-bit

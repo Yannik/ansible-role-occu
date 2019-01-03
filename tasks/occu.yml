@@ -215,6 +215,14 @@
     regexp: '^FirmwareUpdate.BG.OTAU.Home='
     line: 'FirmwareUpdate.BG.OTAU.Home=/etc/config/firmware'
 
+# this is not required, but preferred to keep all hm-related things
+# in one place
+- name: configure crRFD data directory
+  lineinfile:
+    path: /opt/hm/etc/crRFD.conf
+    regexp: '^Persistence.Home='
+    line: 'Persistence.Home=/opt/hm/etc/config/crRFD/data'
+
 - name: Install HMIPServer, ReGaHss, rfd services
   copy:
     src: "{{ item }}.service"

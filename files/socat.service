@@ -1,0 +1,18 @@
+[Unit]
+Description=Socat remote hm/hmip tty
+After=network.target
+
+[Service]
+Type=simple
+
+# apparantly NEEDS to be /dev/ttyS[0-9]+ format. using /dev/ttyS-kellerpi or similar leads
+# to hm-copro.jar crashing
+# commonname= is required, because (server-)cert has an empty commonname field and peer verification therefore fails using the remote hostname.
+# peer authentication is already achieved through the cafile.
+ExecStart=/usr/bin/socat -d -d pty,link=/dev/ttyS1000,raw openssl-connect:%i:2000,cert=/etc/ssl/homematic-socat/client.crt,key=/etc/ssl/homematic-socat/client.key,cafile=/etc/ssl/homematic-socat/%i.crt,forever,commonname=
+
+Restart=always
+RestartSec=1s
+
+[Install]
+WantedBy=multi-user.target

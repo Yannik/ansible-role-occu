@@ -234,6 +234,45 @@
     regexp: '^Persistence.Home='
     line: 'Persistence.Home=/opt/hm/etc/config/crRFD/data'
 
+- block:
+  - name: Install socat
+    package: name=socat state=present
+
+  - name: Install pyopenssl
+    package: name=python-openssl state=present
+
+  - name: Create /etc/ssl/homematic-socat
+    file: path=/etc/ssl/homematic-socat state=directory
+
+  - name: Create private key
+    openssl_privatekey:
+      path: /etc/ssl/homematic-socat/client.key
+
+  - name: Create csr
+    openssl_csr:
+      #country_name: "DE"
+      #state_or_province_name: "unknown"
+      #organization_name: "unknown"
+      path: /etc/ssl/homematic-socat/client.csr
+      privatekey_path: /etc/ssl/homematic-socat/client.key
+
+  - name: Create self-signed certificate
+    openssl_certificate:
+      path: /etc/ssl/homematic-socat/client.crt
+      csr_path: /etc/ssl/homematic-socat/client.csr
+      privatekey_path: /etc/ssl/homematic-socat/client.key
+      provider: selfsigned
+
+  - name: Install socat systemd service
+    copy:
+      src: socat.service
+      dest: /etc/systemd/system/socat-homematic@.service
+
+  - name: Enable socat services
+    service: name=socat-homematic@{{ item }} enabled=yes state=started
+    with_items: "{{ remote_ap_hosts }}"
+  when: remote_ap_hosts|length > 0
+
 - name: Install HMIPServer, ReGaHss, rfd services
   copy:
     src: "{{ item }}.service"

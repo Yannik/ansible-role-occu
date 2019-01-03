@@ -3,12 +3,13 @@
    name: lighttpd
    state: restarted
 
+- name: Restart HMIPServer
+  service:
+   name: HMIPServer
+   state: restarted
+
 - name: Restart ReGaHss
   service:
    name: ReGaHss
    state: restarted
 
-- name: Restart HMIPServer
-  service:
-   name: HMIPServer
-   state: restarted

@@ -1,3 +1,4 @@
 occu_src_dir: /usr/local/src/occu
+occu_hmip_adapter: /dev/ttyUSB0
 occu_use_bidcos: false
 occu_use_hmip: true

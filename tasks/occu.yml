@@ -163,7 +163,7 @@
     path: /opt/hm/etc/crRFD.conf
     section:
     option: Adapter.1.Port
-    value: /dev/ttyUSB0
+    value: "{{ occu_hmip_adapter }}"
 
 - name: Install /etc/config/log4j.xml required by HMIPServer
   copy:

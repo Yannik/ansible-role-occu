@@ -140,9 +140,17 @@
     path: /etc/config
     state: directory
 
-- name: Create /etc/config/firmware (this is hardcoded in rfd)
+# this is hardcoded in rfd.
+# also, this directory is used by ReGaHss to upload new device firmware
+- name: Create /etc/config/firmware
   file:
     path: /etc/config/firmware
+    state: directory
+
+# required by HMIPServer
+- name: Create /var/status directory
+  file:
+    path: /var/status
     state: directory
 
 - name: Install hmserver.conf

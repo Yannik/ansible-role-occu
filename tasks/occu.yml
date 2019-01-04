@@ -212,6 +212,12 @@
      path: /var/status/SDinitialised
      state: touch
 
+# this is hardcoded in /opt/hm/www/api/methods/user/setlanguage.tcl
+- name: Fix setting user language
+  file:
+     path: /etc/config/userprofiles
+     state: directory
+
 - name: Enable devconfig button in webinterface
   lineinfile:
     path: /etc/config/tweaks

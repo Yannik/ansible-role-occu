@@ -83,8 +83,10 @@
           ssl.engine = "enable"
           ssl.pemfile = "{{ occu_ssl_pemfile }}"
       }
-      $HTTP["scheme"] == "http" {
-          url.redirect = (".*" => "https://{{ occu_ssl_hostname }}$0")
+      $HTTP["remoteip"] != "127.0.0.1" {
+          $HTTP["scheme"] == "http" {
+              url.redirect = (".*" => "https://{{ occu_ssl_hostname }}$0")
+          }
       }
   when: occu_ssl_pemfile is defined
 
@@ -98,6 +100,12 @@
   args:
     chdir: "{{ occu_src_dir }}"
   changed_when: false
+  when: occu_force_version_tag is not defined
+  register: occu_version
+
+- name: Set force version tag
+  command: "echo {{ occu_force_version_tag }}"
+  when: occu_force_version_tag is defined
   register: occu_version
 
 # https://homematic-forum.de/forum/viewtopic.php?f=56&t=39240&start=100#p457765
@@ -252,6 +260,12 @@
     path: /opt/hm/etc/crRFD.conf
     regexp: '^Persistence.Home='
     line: 'Persistence.Home=/opt/hm/etc/config/crRFD/data'
+
+- name: Install xmlrpc-client
+  copy: src=xmlrpc-client dest=/usr/local/bin/xmlrpc-client mode=ugo+x
+
+- name: Install get-dutycycle
+  copy: src=get-dutycycle dest=/usr/local/bin/get-dutycycle mode=ugo+x
 
 - block:
   - name: Install socat

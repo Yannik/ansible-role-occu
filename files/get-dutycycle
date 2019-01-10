@@ -1,3 +1,3 @@
 #!/bin/sh
-xmlrpc-client -t "127.0.0.1:2010" -- listBidcosInterfaces | xmlstarlet sel -t -v "//member[name='DUTY_CYCLE']/value/i4" --nl
+xmlrpc-client -t "127.0.0.1:2010" -- listBidcosInterfaces | xmlstarlet sel -t -v "//member[name='DUTY_CYCLE']/value/i4"
 

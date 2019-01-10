@@ -3,6 +3,9 @@
     name: git
     state: present
 
+- name: Install xmlstarlet (for dutycycle script)
+  package: name=xmlstarlet state=present
+
 - name: Clone occu source
   git:
     repo: https://github.com/eq-3/occu.git

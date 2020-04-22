@@ -203,6 +203,17 @@
     option: Adapter.1.Port
     value: "{{ occu_hmip_adapter }}"
 
+- name: Fix tclsh path for hm_startup and hm_autoconf
+  replace:
+    path: "{{ item }}"
+    regexp: "{{ '#!/bin/tclsh' | regex_escape() }}"
+    replace: "#!/opt/hm/bin/tclsh"
+    encoding: iso-8859-1
+  with_items:
+    - /opt/hm/bin/hm_startup
+    - /opt/hm/bin/hm_autoconf
+    - /opt/hm/bin/hm_deldev
+
 - name: Install /etc/config/log4j.xml required by HMIPServer
   copy:
     src: log4j.xml

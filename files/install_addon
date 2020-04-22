@@ -1,0 +1,58 @@
+#!/bin/bash
+#
+# simple install_addon script that will install CCU addons
+# and return either codes >= 10 to signal errors or lower
+# numbers to signal success.
+#
+
+# check if we have an update archive
+if [[ ! -f /usr/local/tmp/new_addon.tar.gz ]]; then
+  exit 101
+fi
+
+# create temp update directory
+UPDATEDIR=$(mktemp -d -p /usr/local/tmp)
+
+# unarchive addon archive
+umask 022
+/bin/tar -C ${UPDATEDIR} --warning=no-timestamp --no-same-owner --no-same-permissions -xf /usr/local/tmp/new_addon.tar.gz
+if [[ $? -ne 0 ]]; then
+  exit 102
+fi
+
+# remove addon archive after unarchiving
+rm -f /usr/local/tmp/new_addon.tar.gz
+if [[ $? -ne 0 ]]; then
+  exit 103
+fi
+
+# check that the update archive contains
+# and executable 'update_script' file
+if [[ ! -x ${UPDATEDIR}/update_script ]]; then
+  exit 104
+fi
+
+# if there are any *.sha256 files we verify
+# the integrity of the archive via the included SHA256 checksums
+(cd ${UPDATEDIR};
+  for chk_file in ${UPDATEDIR}/*.sha256; do
+    [ -f "${chk_file}" ] || break
+    /usr/bin/sha256sum -sc ${chk_file}
+    if [ $? -ne 0 ]; then
+      exit 106
+    fi
+  done
+) || exit 105
+
+# perform addon install by executing the 'update_script' script
+(cd ${UPDATEDIR}; ./update_script HM-RASPBERRYMATIC 2>/dev/null >/dev/null)
+RESULT=$?
+
+# cleanup UPDATEDIR
+rm -rf ${UPDATEDIR}
+
+# make sure all data is written to disk
+sync
+
+# exit with supplied EXIT code of update_script
+exit ${RESULT}

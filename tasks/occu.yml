@@ -236,6 +236,17 @@
      path: /var/status/SDinitialised
      state: touch
 
+- name: Fix installing addons
+  file:
+    path: /usr/local/tmp/
+    state: touch
+
+- name: Install install_addon script
+  copy:
+    src: install_addon
+    dest: /usr/local/bin
+    mode: 700
+
 # this is hardcoded in /opt/hm/www/api/methods/user/setlanguage.tcl
 - name: Fix setting user language
   file:

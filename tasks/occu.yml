@@ -78,20 +78,23 @@
     dest: /etc/lighttpd/conf.d/setenv.conf
   notify: Restart lighttpd
 
-- name: Set up https on lighttpd
+- name: Set up http to https forward on lighttpd
   blockinfile:
     dest: /etc/lighttpd/lighttpd.conf
     content: |
-      $SERVER["socket"] == ":443" {
-          ssl.engine = "enable"
-          ssl.pemfile = "{{ occu_ssl_pemfile }}"
-      }
       $HTTP["remoteip"] != "127.0.0.1" {
           $HTTP["scheme"] == "http" {
               url.redirect = (".*" => "https://{{ occu_ssl_hostname }}$0")
           }
       }
   when: occu_ssl_pemfile is defined
+
+- name: Set pemfile
+  lineinfile:
+    dest: /etc/lighttpd/conf.d/sslsettings.conf
+    line: |
+      ssl.pemfile = "{{ occu_ssl_pemfile }}"
+    regexp: ssl.pemfile
 
 - name: Configure udev rule that enables the tty of the HMIP-RFUSB stick
   copy:

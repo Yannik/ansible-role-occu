@@ -214,6 +214,12 @@
     - /opt/hm/bin/hm_autoconf
     - /opt/hm/bin/hm_deldev
 
+# otherwise there will be thousands of "cannot open file /www/config/stringtable_de.txt [LoadStringTableIfNotAlreadyLoaded():iseESPexec.cpp:5456]" errors
+- name: Create /www -> /opt/hm/www symlink
+  file:
+    src: /opt/hm/www
+    dest: /www
+
 - name: Install /etc/config/log4j.xml required by HMIPServer
   copy:
     src: log4j.xml

@@ -312,11 +312,11 @@
     file: path=/etc/ssl/homematic-socat state=directory
 
   - name: Create private key
-    openssl_privatekey:
+    community.crypto.openssl_privatekey:
       path: /etc/ssl/homematic-socat/client.key
 
   - name: Create csr
-    openssl_csr:
+    community.crypto.openssl_csr:
       #country_name: "DE"
       #state_or_province_name: "unknown"
       #organization_name: "unknown"
@@ -324,7 +324,7 @@
       privatekey_path: /etc/ssl/homematic-socat/client.key
 
   - name: Create self-signed certificate
-    openssl_certificate:
+    community.crypto.x509_certificate:
       path: /etc/ssl/homematic-socat/client.crt
       csr_path: /etc/ssl/homematic-socat/client.csr
       privatekey_path: /etc/ssl/homematic-socat/client.key
